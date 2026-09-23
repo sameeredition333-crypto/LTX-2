@@ -1,0 +1,22 @@
+FROM python:3.12-slim
+
+# Gradio needs these system libraries for image/video processing.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install gradio only — the heavy pipeline (torch, ltx_core, ltx_pipelines) is
+# lazy-imported at generation time. This keeps the image small and lets the UI
+# start on CPU-only machines. On a GPU machine, install the full project
+# dependencies (uv sync --extra natten) and the UI will use them automatically.
+RUN pip install --no-cache-dir "gradio>=5.0,<6.0"
+
+# Copy the web app and source.
+COPY . /app
+
+EXPOSE 3000
+
+CMD ["python", "webapp.py", "--host", "0.0.0.0", "--port", "3000"]

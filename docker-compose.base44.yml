@@ -1,0 +1,29 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.base44
+    ports:
+      - "3000:3000"
+    environment:
+      - BASE44_PUBLIC_HOST_SUFFIX=${BASE44_PUBLIC_HOST_SUFFIX:-}
+      - GRADIO_SERVER_NAME=0.0.0.0
+      - GRADIO_SERVER_PORT=3000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Bind-mount the source so edits are reflected live.
+      - .:/app
+      # Persist generated outputs and model weights outside the container FS.
+      - ltx2_models:/app/models
+      - ltx2_output:/app/output
+    command: ["python", "webapp.py", "--host", "0.0.0.0", "--port", "3000", "--models-dir", "models/ltx-2.5"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  ltx2_models:
+  ltx2_output:
